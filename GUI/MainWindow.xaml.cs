@@ -23,8 +23,8 @@ namespace GUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        Robot robot;
-        string chosenArm;
+        Robot ?robot;
+        string ?chosenArm;
         public ObservableCollection<ComboBoxItem> cbItems { get; set; }
         public ComboBoxItem SelectedcbItem { get; set; }
         public MainWindow()
@@ -35,6 +35,22 @@ namespace GUI
             var cbItem = new ComboBoxItem { Content = "<--Select Arm-->" };
             cbItems.Add(cbItem);
             SelectedcbItem = cbItem;
+        }
+
+        /*Robot*/
+        private void moveRobot_Click(object sender, RoutedEventArgs e)
+        {
+            int x = 0, y = 0, z = 0;
+            if (robot != null)
+                if (int.TryParse(rxOffset.Text, out x) && int.TryParse(ryOffset.Text, out y) && int.TryParse(rzOffset.Text, out z))
+                {
+                    if (robot.Move(x, y, z))
+                        MessageBox.Show($"Moving robot");
+                    else
+                    {
+                        MessageBox.Show($"Robot busy, current action = {robot.currentAction}");
+                    }
+                }
         }
 
         private void createButton_Click(object sender, RoutedEventArgs e)
@@ -50,8 +66,8 @@ namespace GUI
             {
                 cbItems.Clear();
                 var cbItem = new ComboBoxItem { Content = "<--Select Arm-->" };
-                cbItems.Add(cbItem);
                 SelectedcbItem = cbItem;
+                cbItems.Add(cbItem);
                 string[] names = new string[num];
                 for (int i = 0; i < num; i++)
                 {
@@ -62,32 +78,30 @@ namespace GUI
             }
         }
 
-        private void showButton_Click(object sender, RoutedEventArgs e)
+        private void showRobotCoordsButton_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show(robot.toString());
+            if(robot != null)
+                MessageBox.Show(robot.toString());
         }
-
-        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void showRobotStatusButton_Click(object sender, RoutedEventArgs e)
         {
-            if (armSelectionBox.SelectedValue != null && armSelectionBox.SelectedIndex != 0)
-            {
-                chosenArm = ((ComboBoxItem)armSelectionBox.SelectedItem).Content.ToString();
-                MessageBox.Show($"Working on {chosenArm}");
-            }
-            else
-            {
-                chosenArm = null;
-            }
+            if (robot != null)
+                MessageBox.Show(robot.GetStatus());
         }
+        /*Robot arms*/
 
         private void moveSelectedArm_Click(object sender, RoutedEventArgs e)
         {
             int x=0, y=0, z=0;
-            if (chosenArm != null)
+            if (robot != null && chosenArm != null)
                 if (int.TryParse(xOffset.Text, out x) && int.TryParse(yOffset.Text, out y) && int.TryParse(zOffset.Text, out z))
                 {
-                    robot.MoveArm(chosenArm, x, y, z);
-                    MessageBox.Show($"Working on {chosenArm}");
+                    if(robot.MoveArm(chosenArm, x, y, z))
+                        MessageBox.Show($"Moving {chosenArm}");
+                    else
+                    {
+                        MessageBox.Show($"{chosenArm} busy, current action = {robot.GetArm(chosenArm).currentAction}");
+                    }
                 }
         }
 
@@ -96,6 +110,7 @@ namespace GUI
             Regex rgx = new Regex("[^0-9]+");
             e.Handled = rgx.IsMatch(e.Text);
         }
+
         private void offsetTextbox(object sender, TextCompositionEventArgs e)
         {
             Regex rgx;
@@ -117,6 +132,53 @@ namespace GUI
             {
                 rgx = new Regex("[^0-9]+");
                 e.Handled = rgx.IsMatch(e.Text);
+            }
+        }
+
+        private void performShortAction_Click(object sender, RoutedEventArgs e)
+        {
+            if (robot != null && chosenArm != null)
+                if (robot.ArmActionFactory(chosenArm,"short"))
+                        MessageBox.Show($"Action started {chosenArm}");
+                else
+                {
+                        MessageBox.Show($"{chosenArm} busy, current action = {robot.GetArm(chosenArm).currentAction}");
+                }
+        }
+
+        private void performMediumAction_Click(object sender, RoutedEventArgs e)
+        {
+            if (robot != null && chosenArm != null)
+                if (robot.ArmActionFactory(chosenArm, "medium"))
+                    MessageBox.Show($"Action started {chosenArm}");
+                else
+                {
+                    MessageBox.Show($"{chosenArm} busy, current action = {robot.GetArm(chosenArm).currentAction}");
+                }
+        }
+
+        private void performLongAction_Click(object sender, RoutedEventArgs e)
+        {
+            if (robot != null && chosenArm != null)
+                if (robot.ArmActionFactory(chosenArm, "long"))
+                    MessageBox.Show($"Action started {chosenArm}");
+                else
+                {
+                    MessageBox.Show($"{chosenArm} busy, current action = {robot.GetArm(chosenArm).currentAction}");
+                }
+        }
+
+        /*Utilities*/
+        private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (armSelectionBox.SelectedValue != null && armSelectionBox.SelectedIndex != 0)
+            {
+                chosenArm = ((ComboBoxItem)armSelectionBox.SelectedItem).Content.ToString();
+                MessageBox.Show($"Working on {chosenArm}");
+            }
+            else
+            {
+                chosenArm = null;
             }
         }
     }

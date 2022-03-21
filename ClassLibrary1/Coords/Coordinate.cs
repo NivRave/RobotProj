@@ -11,6 +11,18 @@ namespace ClassLibrary1.Coords
         public int y { get; set; }
         public int z { get; set; }
 
+        public Coordinate()
+        {
+            SetZero();
+        }
+
+        public Coordinate(Coordinate c)
+        {
+            this.x = c.x;
+            this.y = c.y;
+            this.z = c.z;
+        }
+
         public void SetZero()
         {
             x= 0;
